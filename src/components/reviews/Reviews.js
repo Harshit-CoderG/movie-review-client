@@ -1,0 +1,99 @@
+import { useEffect, useRef } from "react";
+import api from "../../api/axiosConfig";
+import { useParams } from "react-router-dom";
+import { Container, Row, Col } from "react-bootstrap";
+import ReviewForm from "../reviewForm/ReviewForm";
+import React from "react";
+
+const Reviews = ({ getMovieData, movie, reviews = [], setReviews }) => {
+
+    const revText = useRef(null);
+    const { movieId } = useParams();
+
+    useEffect(() => {
+        getMovieData(movieId);
+    }, [movieId]);
+
+    const addReview = async (e) => {
+        e.preventDefault();
+
+        const reviewValue = revText.current.value;
+
+        if (!reviewValue) return;
+
+        try {
+
+            await api.post("http://localhost:8086/api/v1/reviews", {
+                reviewBody: reviewValue,
+                imdbId: movieId
+            });
+
+            // safer state update
+            setReviews(prevReviews => [...(prevReviews || []), { body: reviewValue }]);
+
+            // clear input
+            revText.current.value = "";
+
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    return (
+        <Container>
+            <Row>
+                <Col>
+                    <h3>Reviews</h3>
+                </Col>
+            </Row>
+
+            <Row className="mt-2">
+                <Col>
+                    <img src={movie?.poster} alt="movie poster" />
+                </Col>
+
+                <Col>
+
+                    <Row>
+                        <Col>
+                            <ReviewForm
+                                handleSubmit={addReview}
+                                revText={revText}
+                                labelText="Write a Review?"
+                            />
+                        </Col>
+                    </Row>
+
+                    <Row>
+                        <Col>
+                            <hr />
+                        </Col>
+                    </Row>
+
+                    {reviews?.map((r, index) => (
+                        <React.Fragment key={index}>
+                            <Row>
+                                <Col>{r.body}</Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <hr />
+                                </Col>
+                            </Row>
+                        </React.Fragment>
+                    ))}
+
+                </Col>
+            </Row>
+
+            <Row>
+                <Col>
+                    <hr />
+                </Col>
+            </Row>
+
+        </Container>
+    );
+};
+
+export default Reviews;
